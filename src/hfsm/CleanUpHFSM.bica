@@ -1,0 +1,19 @@
+<component id="CleanUpHFSM">
+ <state x="-744" y="-374" id="SearchObject" initial="false">
+  <activation id="vision"/>
+  <activation id="attention"/>
+ </state>
+ <state x="-544" y="-377" id="PickObject" initial="false">
+  <activation id="attention"/>
+ </state>
+ <state x="-644" y="-533" id="PlaceObject" initial="false">
+  <activation id="attention"/>
+ </state>
+ <state x="-939" y="-373" id="Init" initial="true"/>
+ <component x="-832" y="-239" id="vision"/>
+ <component x="-636" y="-235" id="attention"/>
+ <transition src="Init" dst="SearchObject"/>
+ <transition src="PlaceObject" dst="SearchObject"/>
+ <transition src="PickObject" dst="PlaceObject"/>
+ <transition src="SearchObject" dst="PickObject"/>
+</component>
