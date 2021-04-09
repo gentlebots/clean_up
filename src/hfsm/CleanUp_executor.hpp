@@ -29,12 +29,14 @@ public:
 
 private:
 	void initKnowledge();
+  void initSubZones();
 
 	std::shared_ptr<plansys2::ProblemExpertClient> problem_expert_;
   std::shared_ptr<plansys2::ExecutorClient> executor_client_;
 	std::shared_ptr<ros2_knowledge_graph::GraphNode> graph_;
+  std::vector<std::string> zone_w_subzones_;
   rclcpp::Node::SharedPtr plansys2_node_;
-
+  int n_subzones_ = 6;
 };
 
 #endif

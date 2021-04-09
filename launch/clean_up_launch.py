@@ -29,7 +29,7 @@ import lifecycle_msgs.msg
 
 def generate_launch_description():
     # Get the launch directory
-    example_dir = get_package_share_directory('gb_manipulation')
+    pkgdir = get_package_share_directory('clean_up')
     namespace = LaunchConfiguration('namespace')
 
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -45,7 +45,18 @@ def generate_launch_description():
             get_package_share_directory('gb_manipulation'),
             'launch',
             'gb_manipulation_launch.py')))
+    
+    gb_navigation_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('gb_navigation'),
+            'launch',
+            'nav2_tiago_launch.py')))
 
+    plansys2_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('clean_up'),
+            'launch',
+            'plansys2_launch.py')))
 
     # Specify the actions
     clean_up_executor_cmd = LifecycleNode(
@@ -85,6 +96,8 @@ def generate_launch_description():
 
     # Declare the launch options
     ld.add_action(gb_manipulation_cmd)
+    ld.add_action(gb_navigation_cmd)
+    ld.add_action(plansys2_cmd)
     ld.add_action(clean_up_executor_cmd)
     ld.add_action(vision_cmd)
 
