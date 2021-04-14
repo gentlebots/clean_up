@@ -28,6 +28,8 @@ public:
 	void init();
 
 private:
+  bool getResult();
+  std::string statusToString(int8_t status);
 	void initKnowledge();
   void initSubZones();
 
@@ -37,6 +39,7 @@ private:
   std::vector<std::string> zone_w_subzones_;
   rclcpp::Node::SharedPtr plansys2_node_;
   int n_subzones_ = 6;
+  bool succesful_plan_ = false;
 };
 
 #endif

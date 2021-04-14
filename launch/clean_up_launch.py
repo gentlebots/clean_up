@@ -29,7 +29,10 @@ import lifecycle_msgs.msg
 
 def generate_launch_description():
     # Get the launch directory
-    pkgdir = get_package_share_directory('clean_up')
+    pkg_dir = get_package_share_directory('clean_up')
+    nav_dir = get_package_share_directory('gb_navigation')
+    manipulation_dir = get_package_share_directory('gb_manipulation')
+
     namespace = LaunchConfiguration('namespace')
 
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -54,9 +57,13 @@ def generate_launch_description():
 
     plansys2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('clean_up'),
+            get_package_share_directory('plansys2_bringup'),
             'launch',
-            'plansys2_launch.py')))
+            'plansys2_bringup_launch_monolithic.py')),
+        launch_arguments={'model_file': nav_dir + '/pddl/domain.pddl:' +
+                                        manipulation_dir + '/pddl/domain.pddl'
+                                        }.items()
+        )
 
     # Specify the actions
     clean_up_executor_cmd = LifecycleNode(

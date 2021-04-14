@@ -29,14 +29,14 @@ void CleanUp_executor::initKnowledge()
 
   problem_expert_->addInstance(plansys2::Instance{"outdoor", "zone"});
   problem_expert_->addInstance(plansys2::Instance{"living_room", "zone"});
-  zone_w_subzones_.push_back("foodTray");
+  problem_expert_->addInstance(plansys2::Instance{"near_lemon", "zone"});
+
+  zone_w_subzones_.push_back("foodtray");
   initSubZones();
 
   problem_expert_->addPredicate(plansys2::Predicate("(robot_at r2d2 outdoor)"));
   graph_->add_node(ros2_knowledge_graph::Node{"world", "place"});
   graph_->add_node(ros2_knowledge_graph::Node{"r2d2", "robot"});
-  problem_expert_->addPredicate(plansys2::Predicate("(object_picked r2d2 lemon)"));
-
 }
 
 void CleanUp_executor::initSubZones()
@@ -55,6 +55,56 @@ void CleanUp_executor::initSubZones()
   }
 }
 
+std::string 
+CleanUp_executor::statusToString(int8_t status) {
+    switch (status)
+    {
+    case plansys2_msgs::msg::ActionExecutionInfo::NOT_EXECUTED:
+      return "NOT_EXECUTED";
+      break;
+    case plansys2_msgs::msg::ActionExecutionInfo::EXECUTING:
+      return "EXECUTING";
+      break;
+    case plansys2_msgs::msg::ActionExecutionInfo::FAILED:
+      return "FAILED";
+      break;
+    case plansys2_msgs::msg::ActionExecutionInfo::SUCCEEDED:
+      return "SUCCEEDED";
+      break;
+    case plansys2_msgs::msg::ActionExecutionInfo::CANCELLED:
+      return "CANCELLED";
+      break;
+    default:
+      return "UNKNOWN";
+      break;
+    }
+}
+
+bool
+CleanUp_executor::getResult()
+{
+  RCLCPP_INFO(get_logger(), "========================= PLAN FINISHED =========================");
+  auto result = executor_client_->getResult();
+  if (result.has_value()) {
+    RCLCPP_INFO_STREAM(get_logger(), "Plan succesful: " << result.value().success);
+    for (const auto & action_info : result.value().action_execution_status) 
+    {
+      std::string args;
+      rclcpp::Time start_stamp = action_info.start_stamp;
+      rclcpp::Time status_stamp = action_info.status_stamp;
+      for (const auto & arg : action_info.arguments) 
+      {
+        args = args + " " + arg;
+      } 
+      RCLCPP_INFO_STREAM(get_logger(), "Action: " << action_info.action << args << " " << statusToString(action_info.status) << " " << (status_stamp - start_stamp).seconds() << " secs");
+    }
+    return true;
+  } else {
+    RCLCPP_WARN(get_logger(), "No result for this plan");
+  }
+  return false;
+}
+
 void CleanUp_executor::SearchObject_code_iterative()
 {
   RCLCPP_INFO(get_logger(), "SearchObject state");
@@ -68,44 +118,73 @@ void CleanUp_executor::SearchObject_code_once()
 void CleanUp_executor::PickObject_code_iterative()
 {
   RCLCPP_INFO(get_logger(), "PickObject_code_iterative!");
+  //auto feedback = executor_client_->
+
+  if (!executor_client_->execute_and_check_plan()) 
+  {
+    succesful_plan_ = getResult();
+  }
+}
+
+void CleanUp_executor::PickObject_code_once()
+{
+  succesful_plan_ = false;
+  auto edges = graph_->get_edges_from_node_by_data("r2d2", "wanna_pick", "symbolic");
+  RCLCPP_INFO(get_logger(), "PickObject_code_once!");
+  for (auto edge : edges)
+  {
+    problem_expert_->clearGoal();
+    problem_expert_->setGoal(plansys2::Goal("(and(object_picked r2d2 lemon))"));
+  }
+
   if (executor_client_->start_plan_execution()) 
   {
     RCLCPP_INFO(get_logger(), "Done!");
   }
 }
 
-void CleanUp_executor::PickObject_code_once()
-{
-  auto edges = graph_->get_edges_from_node_by_data("r2d2", "wanna_pick", "symbolic");
-  RCLCPP_INFO(get_logger(), "PickObject_code_once!");
-  for (auto edge : edges)
-  {
-    problem_expert_->setGoal(plansys2::Goal("(and(robot_at r2d2 foodTray))"));
-  }
-}
-
 void CleanUp_executor::PlaceObject_code_iterative()
 {
-  
+  RCLCPP_INFO(get_logger(), "PlaceObject_code_iterative!");
+  //auto feedback = executor_client_->
+
+  if (!executor_client_->execute_and_check_plan()) 
+  {
+    succesful_plan_ = getResult();
+  }
 }
 
 void CleanUp_executor::PlaceObject_code_once()
 {
-
+  succesful_plan_ = false;
+  problem_expert_->clearGoal();
+  problem_expert_->setGoal(plansys2::Goal("(and(object_at lemon foodtray))"));
+  if (executor_client_->start_plan_execution()) 
+  {
+    RCLCPP_INFO(get_logger(), "Done!");
+  }
 }
+
 void CleanUp_executor::Init_code_iterative()
 {
-
+ if (!executor_client_->execute_and_check_plan()) 
+  {
+    succesful_plan_ = getResult();
+  }
 }
 
 void CleanUp_executor::Init_code_once()
 {
-  // problem_expert_->setGoal(plansys2::Goal("(and(object_picked r2d2 sugar))"));
+  problem_expert_->setGoal(plansys2::Goal("(and(robot_at r2d2 near_lemon))"));
+  if (executor_client_->start_plan_execution()) 
+  {
+    RCLCPP_INFO(get_logger(), "Done!");
+  }
 }
 
 bool CleanUp_executor::Init_2_SearchObject()
 {
-  return true;
+  return succesful_plan_;
 }
 
 bool CleanUp_executor::PlaceObject_2_SearchObject()
@@ -115,7 +194,7 @@ bool CleanUp_executor::PlaceObject_2_SearchObject()
 
 bool CleanUp_executor::PickObject_2_PlaceObject()
 {
-  return false;
+  return succesful_plan_;
 }
 
 bool CleanUp_executor::SearchObject_2_PickObject()
