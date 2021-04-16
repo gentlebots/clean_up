@@ -133,7 +133,7 @@ void CleanUp_executor::PickObject_code_once()
   RCLCPP_INFO(get_logger(), "PickObject_code_once!");
   for (auto edge : edges)
   {
-    problem_expert_->clearGoal();
+    //problem_expert_->clearGoal();
     problem_expert_->setGoal(plansys2::Goal("(and(object_picked r2d2 lemon))"));
   }
 
@@ -157,7 +157,7 @@ void CleanUp_executor::PlaceObject_code_iterative()
 void CleanUp_executor::PlaceObject_code_once()
 {
   succesful_plan_ = false;
-  problem_expert_->clearGoal();
+  //problem_expert_->clearGoal();
   problem_expert_->setGoal(plansys2::Goal("(and(object_at lemon foodtray))"));
   if (executor_client_->start_plan_execution()) 
   {

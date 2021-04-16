@@ -18,12 +18,14 @@ from ament_index_python.packages import get_package_share_directory, get_package
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription,\
-    ExecuteProcess, EmitEvent, SetEnvironmentVariable
+    ExecuteProcess, EmitEvent, SetEnvironmentVariable, RegisterEventHandler
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node, LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
+from launch_ros.event_handlers import OnStateTransition
+
 import launch.events
 import lifecycle_msgs.msg
 
@@ -70,19 +72,27 @@ def generate_launch_description():
         package='clean_up',
         executable='cleanup_executor_node',
         name='cleanup_executor_node')
+        
     emit_event_to_request_that_clean_up_executor_configure_transition = EmitEvent(
         event=ChangeState(
             lifecycle_node_matcher=launch.events.matches_action(clean_up_executor_cmd),
             transition_id=lifecycle_msgs.msg.Transition.TRANSITION_CONFIGURE,
         )
     )
+
     emit_event_to_request_that_clean_up_executor_activate_transition = EmitEvent(
         event=ChangeState(
             lifecycle_node_matcher=launch.events.matches_action(clean_up_executor_cmd),
             transition_id=lifecycle_msgs.msg.Transition.TRANSITION_ACTIVATE,
         )
     )
-    
+
+    on_configure_clean_up_executor_handler = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=clean_up_executor_cmd, goal_state='inactive',
+            entities=[emit_event_to_request_that_clean_up_executor_activate_transition]))
+
+ 
     # Specify the dependencies
     vision_cmd = LifecycleNode(
       package='clean_up',
@@ -100,8 +110,12 @@ def generate_launch_description():
     # Set environment variables
     ld.add_action(stdout_linebuf_envvar)
     ld.add_action(declare_namespace_cmd)
-
+    
     # Declare the launch options
+
+    # Event handlers
+    ld.add_action(on_configure_clean_up_executor_handler)
+
     ld.add_action(gb_manipulation_cmd)
     ld.add_action(gb_navigation_cmd)
     ld.add_action(plansys2_cmd)
@@ -110,6 +124,5 @@ def generate_launch_description():
 
     ld.add_action(emit_event_to_request_that_vision_configure_transition)
     ld.add_action(emit_event_to_request_that_clean_up_executor_configure_transition)
-    ld.add_action(emit_event_to_request_that_clean_up_executor_activate_transition)
 
     return ld
