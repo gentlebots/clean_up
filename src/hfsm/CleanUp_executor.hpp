@@ -4,8 +4,16 @@
 #include "CleanUpHFSM.hpp"
 #include "plansys2_executor/ExecutorClient.hpp"
 #include "plansys2_problem_expert/ProblemExpertClient.hpp"
+
+#include "ros2_knowledge_graph_msgs/msg/graph.hpp"
+#include "ros2_knowledge_graph_msgs/msg/node.hpp"
+#include "ros2_knowledge_graph_msgs/msg/edge.hpp"
+#include "ros2_knowledge_graph_msgs/msg/graph_update.hpp"
+
 #include "ros2_knowledge_graph/GraphNode.hpp"
-#include "ros2_kg_tf_plugin/TFLayer.hpp"
+#include "ros2_knowledge_graph/graph_utils.hpp"
+
+//#include "ros2_kg_tf_plugin/TFLayer.hpp"
 
 class CleanUp_executor: public cascade_hfsm::CleanUpHFSM
 {

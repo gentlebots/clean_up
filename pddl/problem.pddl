@@ -3,12 +3,7 @@
 
 	(:objects 
 		r2d2 - robot
-		lemon - object
-		spam - object
-		soup - object
-		cloth - object
-		bleach - object
-		banana - object
+		object1 - object
 	)
 
 	( :init
@@ -16,12 +11,7 @@
 	)
 	( :goal
 		(and
-			(is_placed lemon)
-			(is_placed spam)
-			(is_placed soup)
-			(is_placed cloth)
-			(is_placed bleach)
-			(is_placed banana)						
+			(is_placed object1)						
 		)	
 	)
 )
