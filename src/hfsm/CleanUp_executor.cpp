@@ -7,10 +7,12 @@ CleanUp_executor::CleanUp_executor()
 
 void CleanUp_executor::init()
 {
-  graph_ = std::make_shared<ros2_knowledge_graph::GraphNode>(plansys2_node_);
-  //graph_->start();
+  graph_ = ros2_knowledge_graph::GraphFactory::getInstance(shared_from_this());
+
+  domain_expert_ = std::make_shared<plansys2::DomainExpertClient>(plansys2_node_);
   problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>(plansys2_node_);
   executor_client_ = std::make_shared<plansys2::ExecutorClient>(plansys2_node_);
+  planner_client_ = std::make_shared<plansys2::PlannerClient>(plansys2_node_);
   initKnowledge();
 
   //if (!executor_client_->start_plan_execution()) 
@@ -138,9 +140,18 @@ void CleanUp_executor::PickObject_code_once()
     problem_expert_->setGoal(plansys2::Goal("(and(object_picked r2d2 lemon))"));
   }
 
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
@@ -160,9 +171,19 @@ void CleanUp_executor::PlaceObject_code_once()
   succesful_plan_ = false;
   //problem_expert_->clearGoal();
   problem_expert_->setGoal(plansys2::Goal("(and(object_at lemon foodtray))"));
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
@@ -177,9 +198,19 @@ void CleanUp_executor::Init_code_iterative()
 void CleanUp_executor::Init_code_once()
 {
   problem_expert_->setGoal(plansys2::Goal("(and(robot_at r2d2 near_lemon))"));
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
