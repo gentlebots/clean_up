@@ -3,7 +3,9 @@
 
 #include "CleanUpHFSM.hpp"
 #include "plansys2_executor/ExecutorClient.hpp"
+#include "plansys2_domain_expert/DomainExpertClient.hpp"
 #include "plansys2_problem_expert/ProblemExpertClient.hpp"
+#include "plansys2_planner/PlannerClient.hpp"
 
 #include "ros2_knowledge_graph_msgs/msg/graph.hpp"
 #include "ros2_knowledge_graph_msgs/msg/node.hpp"
@@ -41,11 +43,17 @@ private:
 	void initKnowledge();
   void initSubZones();
 
-	std::shared_ptr<plansys2::ProblemExpertClient> problem_expert_;
+  std::shared_ptr<plansys2::ProblemExpertClient> problem_expert_;
+  std::shared_ptr<plansys2::DomainExpertClient> domain_expert_;
   std::shared_ptr<plansys2::ExecutorClient> executor_client_;
-	std::shared_ptr<ros2_knowledge_graph::GraphNode> graph_;
+  std::shared_ptr<plansys2::PlannerClient> planner_client_;
+
+	ros2_knowledge_graph::GraphNode * graph_;
+
   std::vector<std::string> zone_w_subzones_;
+
   rclcpp::Node::SharedPtr plansys2_node_;
+
   int n_subzones_ = 6;
   bool succesful_plan_ = false;
 };
