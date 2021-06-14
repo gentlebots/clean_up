@@ -2,17 +2,16 @@
 
 CleanUp_executor::CleanUp_executor() 
 {
-  plansys2_node_ = rclcpp::Node::make_shared("cleanup_plansys2_node");
 }
 
 void CleanUp_executor::init()
 {
   graph_ = ros2_knowledge_graph::GraphFactory::getInstance(shared_from_this());
 
-  domain_expert_ = std::make_shared<plansys2::DomainExpertClient>(plansys2_node_);
-  problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>(plansys2_node_);
-  executor_client_ = std::make_shared<plansys2::ExecutorClient>(plansys2_node_);
-  planner_client_ = std::make_shared<plansys2::PlannerClient>(plansys2_node_);
+  domain_expert_ = std::make_shared<plansys2::DomainExpertClient>();
+  problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>();
+  executor_client_ = std::make_shared<plansys2::ExecutorClient>();
+  planner_client_ = std::make_shared<plansys2::PlannerClient>();
   initKnowledge();
 
   //if (!executor_client_->start_plan_execution()) 
