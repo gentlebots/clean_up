@@ -17,6 +17,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_cascade_lifecycle/rclcpp_cascade_lifecycle.hpp"
 #include "ros2_knowledge_graph/GraphNode.hpp"
+#include "ros2_knowledge_graph/graph_utils.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2/transform_datatypes.h"
 #include "tf2/LinearMath/Transform.h"
@@ -63,8 +64,9 @@ public:
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_configure(const rclcpp_lifecycle::State & previous_state)
   {
-    graph_ = std::make_shared<ros2_knowledge_graph::GraphNode>("vision");
-    graph_->start();
+    //TODO: ask fmrico about this...
+    auto node = rclcpp::Node::make_shared("graph_node");
+    graph_ = std::make_shared<ros2_knowledge_graph::GraphNode>(node);
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
   }
 
@@ -73,21 +75,19 @@ public:
   {
     timer_ = create_wall_timer(
       std::chrono::milliseconds(200), std::bind(&VisionSim::loop, this));
-    graph_->add_node(ros2_knowledge_graph::Node{"sugar_box", "object"});
-    graph_->add_edge(ros2_knowledge_graph::Edge{
-            tf_to_string(sugar_),
-            "tf_static",
+    graph_->update_node(ros2_knowledge_graph::new_node("sugar_box", "object"));
+    graph_->update_edge(ros2_knowledge_graph::new_edge(
             "world" ,
-            "sugar_box"
-          });
+            "sugar_box",
+            sugar_
+          ));
 
-    graph_->add_node(ros2_knowledge_graph::Node{"lemon", "object"});
-    graph_->add_edge(ros2_knowledge_graph::Edge{
-            tf_to_string(lemon_),
-            "tf_static",
+    graph_->update_node(ros2_knowledge_graph::new_node("lemon", "object"));
+    graph_->update_edge(ros2_knowledge_graph::new_edge(
             "world" ,
-            "lemon"
-          });
+            "lemon",
+            lemon_
+          ));
     return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
   }
 

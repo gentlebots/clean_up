@@ -10,7 +10,7 @@ find_package(plansys2_executor REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(ros2_knowledge_graph REQUIRED)
 find_package(rclcpp_cascade_lifecycle REQUIRED)
-find_package(ros2_knowledge_graph_plugins REQUIRED)
+#find_package(ros2_knowledge_graph_plugins REQUIRED)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -24,7 +24,7 @@ set(dependencies
     plansys2_executor
     ament_index_cpp
     ros2_knowledge_graph
-    ros2_knowledge_graph_plugins
+    #ros2_knowledge_graph_plugins
     rclcpp_cascade_lifecycle
 )
 

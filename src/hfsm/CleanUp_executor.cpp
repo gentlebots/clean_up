@@ -2,15 +2,16 @@
 
 CleanUp_executor::CleanUp_executor() 
 {
-  plansys2_node_ = rclcpp::Node::make_shared("cleanup_plansys2_node");
 }
 
 void CleanUp_executor::init()
 {
-  graph_ = std::make_shared<ros2_knowledge_graph::GraphNode>("clean_up");
-  graph_->start();
-  problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>(plansys2_node_);
-  executor_client_ = std::make_shared<plansys2::ExecutorClient>(plansys2_node_);
+  graph_ = ros2_knowledge_graph::GraphFactory::getInstance(shared_from_this());
+
+  domain_expert_ = std::make_shared<plansys2::DomainExpertClient>();
+  problem_expert_ = std::make_shared<plansys2::ProblemExpertClient>();
+  executor_client_ = std::make_shared<plansys2::ExecutorClient>();
+  planner_client_ = std::make_shared<plansys2::PlannerClient>();
   initKnowledge();
 
   //if (!executor_client_->start_plan_execution()) 
@@ -35,8 +36,8 @@ void CleanUp_executor::initKnowledge()
   initSubZones();
 
   problem_expert_->addPredicate(plansys2::Predicate("(robot_at r2d2 outdoor)"));
-  graph_->add_node(ros2_knowledge_graph::Node{"world", "place"});
-  graph_->add_node(ros2_knowledge_graph::Node{"r2d2", "robot"});
+  graph_->update_node(ros2_knowledge_graph::new_node("world", "place"));
+  graph_->update_node(ros2_knowledge_graph::new_node("r2d2", "robot"));
 }
 
 void CleanUp_executor::initSubZones()
@@ -128,8 +129,9 @@ void CleanUp_executor::PickObject_code_iterative()
 
 void CleanUp_executor::PickObject_code_once()
 {
+
   succesful_plan_ = false;
-  auto edges = graph_->get_edges_from_node_by_data("r2d2", "wanna_pick", "symbolic");
+  auto edges = graph_->get_edges_from_node_by_data("r2d2", "wanna_pick");
   RCLCPP_INFO(get_logger(), "PickObject_code_once!");
   for (auto edge : edges)
   {
@@ -137,9 +139,18 @@ void CleanUp_executor::PickObject_code_once()
     problem_expert_->setGoal(plansys2::Goal("(and(object_picked r2d2 lemon))"));
   }
 
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
@@ -159,9 +170,19 @@ void CleanUp_executor::PlaceObject_code_once()
   succesful_plan_ = false;
   //problem_expert_->clearGoal();
   problem_expert_->setGoal(plansys2::Goal("(and(object_at lemon foodtray))"));
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
@@ -176,9 +197,19 @@ void CleanUp_executor::Init_code_iterative()
 void CleanUp_executor::Init_code_once()
 {
   problem_expert_->setGoal(plansys2::Goal("(and(robot_at r2d2 near_lemon))"));
-  if (executor_client_->start_plan_execution()) 
-  {
-    RCLCPP_INFO(get_logger(), "Done!");
+
+  auto domain = domain_expert_->getDomain();
+  auto problem = problem_expert_->getProblem();
+  auto plan = planner_client_->getPlan(domain, problem);
+
+  if (plan.has_value()) {
+    if (!executor_client_->start_plan_execution(plan.value())) {
+      RCLCPP_ERROR(get_logger(), "Error starting a new plan (first)");
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(
+      this->get_logger(),"Could not find plan to reach goal " <<
+      parser::pddl::toString(problem_expert_->getGoal()));
   }
 }
 
@@ -200,12 +231,12 @@ bool CleanUp_executor::PickObject_2_PlaceObject()
 bool CleanUp_executor::SearchObject_2_PickObject()
 {
   // action Approach_object
-  if (graph_->add_edge(ros2_knowledge_graph::Edge{"is_near", "symbolic", "r2d2", "lemon"}))
+  if (graph_->update_edge(ros2_knowledge_graph::new_edge("r2d2", "lemon","is_near")))
   {
-    auto edges = graph_->get_edges_from_node_by_data("r2d2", "is_near", "symbolic");
+    auto edges = graph_->get_edges_from_node_by_data("r2d2", "is_near");
     for (auto edge : edges)
     {
-      graph_->add_edge(ros2_knowledge_graph::Edge{"wanna_pick", "symbolic", "r2d2", edge.target});
+      graph_->update_edge(ros2_knowledge_graph::new_edge("r2d2", edge.target_node_id,"wanna_pick"));
     }
     return true;
   }
