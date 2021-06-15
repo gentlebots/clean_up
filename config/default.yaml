@@ -1,0 +1,5 @@
+  ros__parameters:
+    plugins:
+      - get_placing_pose_bt_node
+      - approach_object_bt_node
+      - get_pose_from_object_bt_node¡
