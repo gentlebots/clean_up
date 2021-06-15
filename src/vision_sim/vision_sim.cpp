@@ -51,7 +51,7 @@ public:
 
     lemon_.transform.translation.x = -1.71;
     lemon_.transform.translation.y = -1.61;
-    lemon_.transform.translation.z = 0.001;
+    lemon_.transform.translation.z = 0.01;
     q.setEuler(0.05,0.04,0.04);
     lemon_.transform.rotation.x =  q.x();
     lemon_.transform.rotation.y =  q.y();
