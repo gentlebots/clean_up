@@ -49,7 +49,7 @@ private:
   std::shared_ptr<plansys2::PlannerClient> planner_client_;
 
 	ros2_knowledge_graph::GraphNode * graph_;
-
+  rclcpp::Node::SharedPtr node_;
   std::vector<std::string> zone_w_subzones_;
 
   int n_subzones_ = 6;

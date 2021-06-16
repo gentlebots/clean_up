@@ -34,8 +34,16 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('clean_up')
     nav_dir = get_package_share_directory('gb_navigation')
     manipulation_dir = get_package_share_directory('gb_manipulation')
+    gb_world_model_dir = get_package_share_directory('gb_world_model')
+    world_config_dir = os.path.join(gb_world_model_dir, 'config')
 
     namespace = LaunchConfiguration('namespace')
+    dope_params_file = LaunchConfiguration('dope_params_file')
+
+    declare_dope_params_cmd = DeclareLaunchArgument(
+        'dope_params_file',
+        default_value=os.path.join(get_package_share_directory('dope_launch'), 'config', 'config_pose.yaml'),
+        description='Full path to the TF Pose Estimation parameters file to use')
 
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
@@ -61,11 +69,19 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('plansys2_bringup'),
             'launch',
-            'plansys2_bringup_launch_distributed.py')),
-        launch_arguments={'model_file': nav_dir + '/pddl/domain.pddl:' +
-                                        manipulation_dir + '/pddl/domain.pddl'
+            'plansys2_bringup_launch_monolithic.py')),
+        launch_arguments={'model_file': pkg_dir + '/pddl/domain.pddl:' +
+                                        nav_dir + '/pddl/domain.pddl' 
                                         }.items()
         )
+    
+    dope_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('dope_launch'),
+            'launch',
+            'dope_launch.py')),
+        launch_arguments={'dope_params_file': dope_params_file}.items()
+    )
 
     # Specify the actions
     clean_up_executor_cmd = LifecycleNode(
@@ -105,12 +121,26 @@ def generate_launch_description():
         )
     )
 
+    attention_manager_cmd = Node(
+        package='gb_attention',
+        executable='attention_server',
+        output='screen')
+
+    wm_cmd = Node(
+        package='gb_world_model',
+        executable='world_model_main',
+        output='screen',
+        parameters=[
+          world_config_dir + '/world.yml'
+        ])
+
     ld = LaunchDescription()
 
     # Set environment variables
     ld.add_action(stdout_linebuf_envvar)
     ld.add_action(declare_namespace_cmd)
-    
+    ld.add_action(declare_dope_params_cmd)
+
     # Declare the launch options
 
     # Event handlers
@@ -124,5 +154,9 @@ def generate_launch_description():
 
     ld.add_action(emit_event_to_request_that_vision_configure_transition)
     ld.add_action(emit_event_to_request_that_clean_up_executor_configure_transition)
+
+    ld.add_action(attention_manager_cmd)
+    ld.add_action(wm_cmd)
+    ld.add_action(dope_cmd)
 
     return ld
