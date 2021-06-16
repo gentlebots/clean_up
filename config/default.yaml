@@ -1,5 +1,9 @@
+# integrar en gb_manipulation
+bt_executor_node:
   ros__parameters:
     plugins:
-      - get_placing_pose_bt_node
-      - approach_object_bt_node
-      - get_pose_from_object_bt_node¡
+      - gb_get_placing_pose_bt_node
+      - gb_get_pose_from_object_bt_node
+      - gb_get_pick_object_bt_node
+      - plansys2_place_simple_bt_node
+      - gb_approach_object_bt_node
