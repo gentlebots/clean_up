@@ -36,7 +36,7 @@ ament_target_dependencies(cleanup_executor_node ${dependencies})
 add_executable(vision_sim_node src/vision_sim/vision_sim.cpp)
 ament_target_dependencies(vision_sim_node ${dependencies})
 
-install(DIRECTORY launch pddl DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY config behaviour_trees_xml launch pddl DESTINATION share/${PROJECT_NAME})
 
 install(TARGETS
   cleanup_executor_node
